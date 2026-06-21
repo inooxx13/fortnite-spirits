@@ -3,17 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Fortnite - Checklist Spirits</title>
-    <!-- (Garde ton style CSS actuel ici) -->
+    <style>
+        /* Garde ton CSS actuel, ajoute juste ceci en haut pour le statut */
+        #status { color: #00ffcc; font-weight: bold; margin-bottom: 10px; text-align: center; }
+    </style>
 </head>
 <body>
-    <div id="status" style="color: #ffb703; font-weight: bold;">⏳ Connexion au Cloud...</div>
+    <div id="status">🔗 PARTAGEZ CE LIEN POUR SYNCHRONISER</div>
     <div class="grid-overlay"></div>
 
     <script>
-        const DB_URL = "https://api.jsonstorage.net/v1/json/00000000-0000-0000-0000-000000000000/b3f7e8a1-2c9d-4e5b-bd6a-73c8ef2d1b09";
+        const layout = [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1];
+        const allSelects = [];
         
-        // Utilise la logique de synchronisation Cloud que je t'ai donnée dans le message précédent
-        // (La fonction saveDataCloud avec fetch(DB_URL, {method: 'PUT'...}))
+        // Initialisation de la grille
+        // ... (utilise le même code de génération que précédemment) ...
+
+        function updateURL() {
+            const code = allSelects.map(s => s.value).join('');
+            window.location.hash = code; // Change l'URL sans recharger
+            document.getElementById('status').textContent = "✅ GRILLE AUTO-SAUVEGARDÉE DANS L'URL";
+        }
+
+        // Charger au démarrage
+        window.onload = () => {
+            const hash = window.location.hash.substring(1);
+            if (hash.length === allSelects.length) {
+                allSelects.forEach((sel, i) => sel.value = hash[i]);
+            }
+            allSelects.forEach(sel => sel.addEventListener('change', updateURL));
+        };
     </script>
 </body>
 </html>
