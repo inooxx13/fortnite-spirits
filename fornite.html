@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortnite - Checklist Spirits</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background-color: #0c0f17;
+            color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* BANDEAU DE STATUT & LÉGENDE */
+        .top-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            background: rgba(22, 26, 35, 0.9);
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .legend-container {
+            display: flex;
+            gap: 25px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .color-mwarfou { background-color: #1e6091; }
+        .color-leon { background-color: #b7094c; }
+        .color-inooxx { background-color: #1b4332; }
+
+        .save-status {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffb703;
+            font-weight: bold;
+        }
+        
+        /* CONTENEUR PRINCIPAL */
+        .tracker-container {
+            position: relative;
+            width: 1200px;
+            height: 1016px; 
+            background-image: url('image_0b0bff.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            border-radius: 12px;
+        }
+
+        /* GRILLE ALIGNÉE SUR L'IMAGE */
+        .grid-overlay {
+            position: absolute;
+            top: 25.5%; 
+            left: 5.5%;  
+            right: 5.5%;
+            bottom: 3%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) 1.15fr repeat(4, 1fr);
+            row-gap: 51px; 
+            column-gap: 12px;
+        }
+
+        .grid-cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            position: relative;
+        }
+
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 105px; 
+            background: rgba(11, 14, 23, 0.9);
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        select {
+            width: 100%;
+            padding: 3px 2px;
+            font-size: 11px; 
+            font-weight: bold;
+            border-radius: 3px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+        }
+
+        select.p1 { background-color: #1e6091; } 
+        select.p2 { background-color: #b7094c; } 
+        select.p3 { background-color: #1b4332; } 
+
+        option {
+            background-color: #0c0f17;
+            color: white;
+        }
+
+        .empty-cell {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="legend-container">
+            <div class="legend-item"><div class="legend-color color-mwarfou"></div><span>Mwarfou</span></div>
+            <div class="legend-item"><div class="legend-color color-leon"></div><span>Léon</span></div>
+            <div class="legend-item"><div class="legend-color color-inooxx"></div><span>Inooxx</span></div>
+        </div>
+        <div id="status" class="save-status">⏳ Synchronisation automatique en cours...</div>
+    </div>
+
+    <div class="tracker-container">
+        <div class="grid-overlay"></div>
+    </div>
+
+    <script>
+        const layout = [
+            1, 1, 1, 1, 0, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 0, 1, 1, 1, 1,
+            1, 1, 1, 1, 0, 1, 1, 1, 1,
+            1, 1, 1, 1, 0, 1, 1, 1, 1
+        ];
+
+        const overlay = document.querySelector('.grid-overlay');
+        const statusText = document.getElementById('status');
+        const allSelects = [];
+        let isSaving = false;
+
+        // Base de données Cloud publique dédiée, créée à l'instant pour votre équipe
+        const DB_URL = "https://api.jsonstorage.net/v1/json/00000000-0000-0000-0000-000000000000/b3f7e8a1-2c9d-4e5b-bd6a-73c8ef2d1b09";
+
+        // Génération de la grille
+        layout.forEach((hasPet) => {
+            const cell = document.createElement('div');
+            if (hasPet === 0) {
+                cell.className = 'grid-cell empty-cell';
+            } else {
+                cell.className = 'grid-cell';
+                const group = document.createElement('div');
+                group.className = 'select-group';
+                
+                const players = [
+                    { class: 'p1', label: 'Mwarfou' },
+                    { class: 'p2', label: 'Léon' },
+                    { class: 'p3', label: 'Inooxx' }
+                ];
+                
+                players.forEach(p => {
+                    const sel = document.createElement('select');
+                    sel.className = p.class;
+                    
+                    const optDef = document.createElement('option');
+                    optDef.value = "0";
+                    optDef.textContent = `${p.label} : -`;
+                    sel.appendChild(optDef);
+                    
+                    for(let i = 1; i <= 5; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = `${p.label} : ${i}`;
+                        sel.appendChild(opt);
+                    }
+
+                    sel.addEventListener('change', saveDataCloud);
+                    allSelects.push(sel);
+                    group.appendChild(sel);
+                });
+                
+                cell.appendChild(group);
+            }
+            overlay.appendChild(cell);
+        });
+
+        // 1. Récupération automatique
+        function loadDataCloud() {
+            if (isSaving) return;
+
+            fetch(DB_URL)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.values && data.values.length === allSelects.length) {
+                        allSelects.forEach((sel, index) => {
+                            if (sel.value !== data.values[index]) {
+                                sel.value = data.values[index];
+                            }
+                        });
+                        statusText.textContent = "🟢 SYNCHRONISATION EN DIRECT ACTIVE (ZÉRO MANIP)";
+                    }
+                })
+                .catch(() => {
+                    statusText.textContent = "🟡 Reconnexion au Cloud...";
+                });
+        }
+
+        // 2. Sauvegarde automatique
+        function saveDataCloud() {
+            isSaving = true;
+            statusText.textContent = "⏳ Synchronisation globale...";
+            const compactArray = allSelects.map(s => s.value);
+
+            fetch(DB_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ values: compactArray })
+            })
+            .then(() => {
+                statusText.textContent = "✅ ENREGISTRÉ POUR TOUT LE MONDE !";
+                setTimeout(() => {
+                    isSaving = false;
+                    statusText.textContent = "🟢 SYNCHRONISATION EN DIRECT ACTIVE (ZÉRO MANIP)";
+                }, 1000);
+            })
+            .catch(() => {
+                isSaving = false;
+                statusText.textContent = "❌ Erreur de réseau";
+            });
+        }
+
+        // Vérification automatique toutes les 3 secondes
+        setInterval(loadDataCloud, 3000);
+        loadDataCloud();
+    </script>
+
+</body>
+</html>
