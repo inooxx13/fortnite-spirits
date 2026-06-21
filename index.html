@@ -4,34 +4,51 @@
     <meta charset="UTF-8">
     <title>Fortnite - Checklist Spirits</title>
     <style>
-        /* Garde ton CSS actuel, ajoute juste ceci en haut pour le statut */
-        #status { color: #00ffcc; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        body { background-color: #0c0f17; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .grid-overlay { display: grid; grid-template-columns: repeat(9, 1fr); gap: 10px; margin-top: 20px; }
+        .select-group { background: #161a23; padding: 10px; border-radius: 8px; }
+        select { display: block; margin-bottom: 5px; width: 100px; }
     </style>
 </head>
 <body>
-    <div id="status">🔗 PARTAGEZ CE LIEN POUR SYNCHRONISER</div>
-    <div class="grid-overlay"></div>
+    <h2 id="status">✅ MODE LOCAL : PARTAGEZ VOTRE URL</h2>
+    <div class="grid-overlay" id="grid"></div>
 
     <script>
-        const layout = [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1];
+        const grid = document.getElementById('grid');
+        const status = document.getElementById('status');
         const allSelects = [];
-        
-        // Initialisation de la grille
-        // ... (utilise le même code de génération que précédemment) ...
 
-        function updateURL() {
-            const code = allSelects.map(s => s.value).join('');
-            window.location.hash = code; // Change l'URL sans recharger
-            document.getElementById('status').textContent = "✅ GRILLE AUTO-SAUVEGARDÉE DANS L'URL";
+        // Création de la grille (45 éléments)
+        for (let i = 0; i < 45; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'select-group';
+            ['Mwarfou', 'Léon', 'Inooxx'].forEach(p => {
+                const sel = document.createElement('select');
+                for (let v = 0; v <= 5; v++) {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v === 0 ? p + " : -" : p + " : " + v;
+                    sel.appendChild(opt);
+                }
+                sel.addEventListener('change', updateHash);
+                allSelects.push(sel);
+                cell.appendChild(sel);
+            });
+            grid.appendChild(cell);
         }
 
-        // Charger au démarrage
+        function updateHash() {
+            const code = allSelects.map(s => s.value).join('');
+            window.location.hash = code;
+            status.textContent = "✅ SAUVEGARDE LOCALE : COPIEZ VOTRE URL POUR PARTAGER";
+        }
+
         window.onload = () => {
             const hash = window.location.hash.substring(1);
             if (hash.length === allSelects.length) {
                 allSelects.forEach((sel, i) => sel.value = hash[i]);
             }
-            allSelects.forEach(sel => sel.addEventListener('change', updateURL));
         };
     </script>
 </body>
