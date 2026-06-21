@@ -1,55 +1,31 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Fortnite - Checklist Spirits</title>
-    <style>
-        body { background-color: #0c0f17; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        .grid-overlay { display: grid; grid-template-columns: repeat(9, 1fr); gap: 10px; margin-top: 20px; }
-        .select-group { background: #161a23; padding: 10px; border-radius: 8px; }
-        select { display: block; margin-bottom: 5px; width: 100px; }
-    </style>
-</head>
-<body>
-    <h2 id="status">✅ MODE LOCAL : PARTAGEZ VOTRE URL</h2>
-    <div class="grid-overlay" id="grid"></div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-    <script>
-        const grid = document.getElementById('grid');
-        const status = document.getElementById('status');
-        const allSelects = [];
+  const firebaseConfig = {
+    databaseURL: "https://fortnite-spirits-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
 
-        // Création de la grille (45 éléments)
-        for (let i = 0; i < 45; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'select-group';
-            ['Mwarfou', 'Léon', 'Inooxx'].forEach(p => {
-                const sel = document.createElement('select');
-                for (let v = 0; v <= 5; v++) {
-                    const opt = document.createElement('option');
-                    opt.value = v;
-                    opt.textContent = v === 0 ? p + " : -" : p + " : " + v;
-                    sel.appendChild(opt);
-                }
-                sel.addEventListener('change', updateHash);
-                allSelects.push(sel);
-                cell.appendChild(sel);
-            });
-            grid.appendChild(cell);
-        }
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const dataRef = ref(db, 'grille');
 
-        function updateHash() {
-            const code = allSelects.map(s => s.value).join('');
-            window.location.hash = code;
-            status.textContent = "✅ SAUVEGARDE LOCALE : COPIEZ VOTRE URL POUR PARTAGER";
-        }
+  // Quand la base change (quelqu'un d'autre modifie), on met à jour la page
+  onValue(dataRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      allSelects.forEach((sel, i) => {
+        if (data[i] !== undefined) sel.value = data[i];
+      });
+    }
+  });
 
-        window.onload = () => {
-            const hash = window.location.hash.substring(1);
-            if (hash.length === allSelects.length) {
-                allSelects.forEach((sel, i) => sel.value = hash[i]);
-            }
-        };
-    </script>
-</body>
-</html>
+  // Quand toi tu changes quelque chose, on envoie à la base
+  function updateFirebase() {
+    const data = allSelects.map(s => s.value);
+    set(dataRef, data);
+  }
+
+  // Ajoute l'écouteur sur chaque menu déroulant
+  allSelects.forEach(sel => sel.addEventListener('change', updateFirebase));
+</script>
